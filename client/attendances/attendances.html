@@ -1,0 +1,253 @@
+<template name="attendances">
+  <section class="content-header">
+    <h1>
+      <i class="fa fa-pencil-square-o"></i>&nbsp;Келушілер журналы
+      <small>Тіркеу немесе тізімін көру</small>
+    </h1>
+    <ol class="breadcrumb">
+      <li><a href="/"><i class="fa fa-dashboard"></i>Басты бет</a></li>
+      <li class="active"><i class="fa fa-pencil-square-o"></i>&nbsp;Келушілер журналы</li>
+    </ol>
+  </section>
+  <section class="content">
+    <div>
+
+      {{#if isInRole 'admin'}}
+        <div class="{{hideOrNot}}">
+          <form id="createAttendanceForm">
+            <div class="row">
+              <div class="form-group col-xs-12 col-sm-4 col-md-4">
+                <label for="attendanceDateField">Күнді таңданыз:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" id="attendanceDateField">
+                  <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                </div>
+              </div>
+              <div class="form-group col-xs-12 col-sm-4 col-md-4">
+                <label for="attendanceGroupSelect">Топты таңданыз:</label>
+                <div class="input-group">
+                  <select class="form-control" id="attendanceGroupSelect">
+                    {{#each Groups}}
+                      <option data-select-id="{{@index}}" value="{{_id}}">{{name}}</option>
+                    {{/each}}
+                  </select>
+                  <div class="input-group-addon">
+                    <i class="icon-group"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group col-xs-12 col-sm-4 col-md-4">
+                <label for="attendanceSubjectField">Топтың пәні:</label>
+                <div class="input-group">
+                  <label class="form-control" id="attendanceSubjectField">{{thisGroupSubjectName}}</label>
+                  <div class="input-group-addon">
+                    <i class="fa fa-book"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+             <div class="col-xs-12">
+                <div class="box">
+                  <div class="box-header with-border">
+                    <h3 class="box-title">{{groupName}} тобының оқушылары</h3>
+                  </div>
+                  <div class="box-body table-responsive no-padding">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Аты</th>
+                          <th>Фамилиясы</th>
+                          <th>Орнында</th>
+                          <th>Сұранып кеткен</th>
+                          <th>Келмеген</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {{#each thisAttendanceStudents}}
+                         <tr>
+                          <td>{{ addOne @index }}</td>
+                          <td>{{ getStudentNameById this }}</td>
+                          <td>{{ getStudentLastNameById this }}</td>
+                          <td><button class="btn btn-success attendingBtn" data-student-id="{{this}}">Орнында</button></td>
+                          <td><button class="btn btn-default excusedBtn" data-student-id="{{this}}">Сұранды</button></td>
+                          <td><button class="btn btn-default skippingBtn" data-student-id="{{this}}">Келген жоқ</button></td>
+                         </tr>
+                        {{/each}}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+             </div>
+            </div>
+
+            <div class="row">
+              <div class="col-xs-12">
+                <div class="form-group">
+                  <label>Мұғалім (-дер):</label>
+                  {{#each teachersNames}}
+                    <button class="btn btn-default removeTeacherFromAttendance" id="{{id}}">
+                      {{firstName}} {{lastName}}
+                      <i class="fa fa-trash-o"></i>
+                    </button>
+                  {{/each}}
+                </div>
+              </div>
+              <div class="col-xs-12 col-md-6">
+                <div class="form-group">
+                  <div class="input-group">
+                    <select id="selectTeacherForAttendance" class="form-control">
+                      {{#each Teachers}}
+                        <option value="{{ this }}">
+                          {{getTeacherNamesByIds this}}
+                        </option>
+                      {{/each}}
+                    </select>
+                    <div class="input-group-addon">
+                      <i class="fa fa-users"></i>
+                    </div>
+                  </div>
+                  <br />
+                  <div class="input-group">
+                      <button class="btn btn-info addTeacherToAttendance">
+                      <i class="fa fa-plus"></i>
+                      Мұғалімді қосу
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <!-- кнопки сохранить удалить и отменить -->
+            <div class="row">
+              <div class="col-xs-12 col-md-6">
+                <button type="button" class="btn btn-success" id="saveAttendance">
+                  Сақтау
+                  &nbsp;&nbsp;
+                  <i class="fa fa-save"></i>
+                </button>
+                <button type="button" class="btn btn-warning" id="cancelAttendance">
+                  Болдырмау
+                  &nbsp;&nbsp;
+                  <i class="fa fa-rotate-left"></i>
+                </button>
+              </div>
+              <div class="col-xs-12 col-md-6">
+                <button type="button" class="btn btn-danger {{deleteButtonShow}}" id="deleteAttendance">
+                  Жою
+                  &nbsp;&nbsp;
+                  <i class="fa fa-trash-o"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <button type="button" class="btn btn-primary {{createButtonShow}}" id="createNewAttendance">
+          <i class="fa fa-pencil-square-o"></i>&nbsp;
+          Жаңа келушілер журнал жазуын тіркеу
+        </button>
+
+      {{/if}}
+    </div>
+    <br />
+    <div class="box">
+      <table id="AttendancesTable" class="table table-bordered table-hover">
+          <thead>
+              <tr>
+                <th>#</th>
+                <th><span style="color: #367FA9;">
+                  Күні
+                </span> &nbsp;
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-link filterByDateDD" id="filterByDateBtn" value="0" style="text-decoration:none;">Барлығы</button>
+                    <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li>
+                        <a href="#" value="0" class="filterByDateDD">Барлығы</a>
+                      </li>
+                      <li class="divider">
+                      </li>
+                      <li>
+                        <a href="#" value="1" class="filterByDateDD">Осы апта</a>
+                      </li>
+                      <li>
+                        <a href="#" value="2" class="filterByDateDD">Алдынғы апта</a>
+                      </li>
+                      <li>
+                        <a href="#" value="3" class="filterByDateDD">Осы айда</a>
+                      </li>
+                      <li>
+                        <a href="#" value="4" class="filterByDateDD">Алдынғы айда</a>
+                      </li>
+                      <li>
+                        <a href="#" value="5" class="filterByDateDD">Осы жылда</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <select id="filterByDateSelect">
+                    <option value="0">
+                      Барлығы
+                    </option>
+                    <option value="1">
+                      Осы апта
+                    </option>
+                    <option value="2">
+                      Алдынғы апта
+                    </option>
+                    <option value="3">
+                      Осы айда
+                    </option>
+                    <option value="4">
+                      Алдынғы айда
+                    </option>
+                    <option value="5">
+                      Осы жылда
+                    </option>
+                  </select>
+                </th>
+                <th>Тобы&nbsp;
+                  <select id="filterByGroupSelect">
+                    <option value="0">
+                      Барлық топтар
+                    </option>
+                    {{#each Groups}}
+                    <option value="{{_id}}">
+                      {{name}}
+                    </option>
+                    {{/each}}
+                  </select>
+                </th>
+                <th>Оқушылар саны</th>
+                <th>Келмеген саны</th>
+                <th>Тексеруші</th>
+              </tr>
+          </thead>
+          <tfoot>
+              <tr>
+                <th>#</th>
+                <th>Күні</th>
+                <th>Тобы</th>
+                <th>Оқушылар саны</th>
+                <th>Келмеген саны</th>
+                <th>Тексеруші</th>
+              </tr>
+          </tfoot>
+          <tbody>
+            {{#each Attendances}}
+              <tr class="dataRow" id="{{_id}}">
+                <td>{{addOne @index}}</td>
+                <td>{{getDate date}}</td>
+                <td>{{getGroupNameById group}}</td>
+                <td>{{studentsCount _id}}</td>
+                <td>{{missingStudentsCount _id}}</td>
+                <td>{{getUserById createdBy}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+      </table>
+    </div>
+  </section>
+</template>
